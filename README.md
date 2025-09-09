@@ -1,4 +1,4 @@
-# Synoptic - AI & Cloud Infrastructure Consultancy Website
+# Synoptic - AI & Cloud Infrastructure Consultancy Website v1
 
 This repository contains the complete source code for the Synoptic consultancy website. The site is built as a React Single Page Application (SPA) using Vite build tool and Tailwind CSS for styling.
 
