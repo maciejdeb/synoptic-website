@@ -1,0 +1,30 @@
+{
+  "name": "synoptic-website",
+  "version": "1.0.0",
+  "description": "Synoptic AI & Cloud Infrastructure Consultancy Website",
+  "type": "module",
+  "scripts": {
+    "dev": "python -m http.server 3000",
+    "preview": "python -m http.server 4173",
+    "deploy": "echo 'Deploy using your preferred static hosting service'"
+  },
+  "keywords": [
+    "synoptic",
+    "ai",
+    "cloud",
+    "consultancy",
+    "react",
+    "vite",
+    "static-site"
+  ],
+  "author": "Synoptic",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/synoptic-website.git"
+  },
+  "homepage": ".",
+  "engines": {
+    "node": ">=16"
+  }
+}
