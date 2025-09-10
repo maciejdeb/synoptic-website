@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { Phone, Mail, MapPin, Clock, Send } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, Send, CheckCircle } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 const ContactSection: React.FC = () => {
   const { t } = useLanguage();
@@ -11,20 +12,57 @@ const ContactSection: React.FC = () => {
     company: '',
     message: ''
   });
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({...prev, [name]: value}));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log('Form submitted:', formData);
+    setIsSubmitting(true);
+    
+    try {
+      // Submit form data to Supabase edge function
+      const { data, error } = await supabase.functions.invoke('contact-form', {
+        body: formData
+      });
+      
+      if (error) {
+        throw new Error(error.message || 'Wystąpił błąd podczas wysyłania wiadomości');
+      }
+      
+      // Check for application-level errors
+      if (data?.error) {
+        throw new Error(data.error.message || 'Wystąpił błąd podczas wysyłania wiadomości');
+      }
+      
+      console.log('Form submitted successfully:', data);
+      
+      setIsSubmitted(true);
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        company: '',
+        message: ''
+      });
+      
+      // Hide success message after 5 seconds
+      setTimeout(() => setIsSubmitted(false), 5000);
+    } catch (error) {
+      console.error('Form submission error:', error);
+      // You could add error state here to show user-friendly error messages
+      alert(`Błąd: ${error instanceof Error ? error.message : 'Wystąpił nieoczekiwany błąd'}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <section id="consultation" className="py-20 bg-white">
+    <section id="contact" className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16">
@@ -114,7 +152,22 @@ const ContactSection: React.FC = () => {
 
           {/* Contact Form */}
           <div>
-            <div className="bg-slate-50 rounded-3xl p-8">
+            <div className="bg-slate-50 rounded-3xl p-8 relative">
+              {/* Success Message */}
+              {isSubmitted && (
+                <div className="absolute inset-0 bg-white bg-opacity-95 backdrop-blur-sm rounded-3xl flex items-center justify-center z-10">
+                  <div className="text-center max-w-md mx-auto p-8">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CheckCircle className="w-8 h-8 text-green-600" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-slate-900 mb-2">Dziękujemy!</h3>
+                    <p className="text-slate-600 leading-relaxed">
+                      Twoja wiadomość została wysłana. Odpowiemy w ciągu 24 godzin.
+                    </p>
+                  </div>
+                </div>
+              )}
+              
               <h3 className="text-2xl font-bold text-slate-900 mb-6">{t('contact.form.title')}</h3>
               
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -130,7 +183,8 @@ const ContactSection: React.FC = () => {
                       required
                       value={formData.name}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      disabled={isSubmitting}
+                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50"
                     />
                   </div>
                   
@@ -145,7 +199,8 @@ const ContactSection: React.FC = () => {
                       required
                       value={formData.email}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      disabled={isSubmitting}
+                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50"
                     />
                   </div>
                 </div>
@@ -161,7 +216,8 @@ const ContactSection: React.FC = () => {
                       name="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      disabled={isSubmitting}
+                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50"
                     />
                   </div>
                   
@@ -175,7 +231,8 @@ const ContactSection: React.FC = () => {
                       name="company"
                       value={formData.company}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      disabled={isSubmitting}
+                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:opacity-50"
                     />
                   </div>
                 </div>
@@ -191,17 +248,19 @@ const ContactSection: React.FC = () => {
                     required
                     value={formData.message}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none disabled:opacity-50"
                     placeholder="Opisz swój projekt lub zadaj pytanie..."
                   />
                 </div>
                 
                 <button
                   type="submit"
-                  className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-200 flex items-center justify-center space-x-2 group"
+                  disabled={isSubmitting}
+                  className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-200 flex items-center justify-center space-x-2 group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Send className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  <span>{t('contact.form.send')}</span>
+                  <Send className={`w-5 h-5 transition-transform ${isSubmitting ? 'animate-pulse' : 'group-hover:translate-x-1'}`} />
+                  <span>{isSubmitting ? 'Wysyłanie...' : t('contact.form.send')}</span>
                 </button>
               </form>
             </div>
